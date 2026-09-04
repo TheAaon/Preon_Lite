@@ -1,65 +1,34 @@
-# Pre'on Lite v0.1
+# Pre'on Lite v0.1.1 — webes kiadás
 
-A Pre'on Desktop v0.22.5-ből készített, teljesen böngészős kiadás. Statikus weboldalként fut: nincs backend, nincs felhasználói fiók, és a prezentációk nem kerülnek fel GitHubra.
+Ez a Pre'on v0.22.5-ből készített, backend nélküli statikus webes változat. A prezentációs adatok a böngészőben maradnak; a projektek helyi `.preon` fájlként nyithatók és menthetők.
 
-## GitHub Pages – legegyszerűbb telepítés
+## GitHub Pages
 
-1. Hozz létre egy GitHub repositoryt.
-2. Töltsd fel ennek a csomagnak a TELJES tartalmát a repository gyökerébe.
-3. GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-4. A csomagban lévő `.github/workflows/deploy-pages.yml` automatikusan felépíti és publikálja az appot minden `main` vagy `master` push után.
+A repository gyökerébe a **Preon-Lite-v0.1.1 mappa tartalmát** töltsd fel.
 
-A Vite build relatív útvonalakat (`base: "./"`) használ, ezért a Pre'on Lite repository-aloldalon is működik, például `https://felhasznalo.github.io/preon-lite/` alatt.
+Ezután egyszer állítsd be:
 
-## Helyi indítás
+**Settings → Pages → Build and deployment → Source → GitHub Actions**
 
-Windows: dupla kattintás a `START_LOCAL.bat` fájlra.
+A `.github/workflows/deploy-pages.yml` automatikusan telepíti a build-függőségeket, elkészíti a statikus `site/` webappot, ellenőrzi a buildet, majd GitHub Pages-re deployolja.
 
-macOS: dupla kattintás a `START_LOCAL.command` fájlra.
+A kiadott build `base: "./"` beállítást használ, így GitHub repository alútvonalon és saját domainen is működik.
 
-Kézzel:
+## Miért volt fehér a v0.1?
+
+A v0.1 gyökér `index.html` fájlja fejlesztői Vite belépő volt, és közvetlenül `src/main.tsx`-et hivatkozott. Ha a GitHub Pages ezt a nyers fájlt szolgálta ki build nélkül, a böngésző nem tudta a TSX/React forrást közvetlenül futtatni, ezért üres oldal jelent meg.
+
+A v0.1.1-ben a fejlesztői belépő `app.html`, a GitHub Pages pedig kizárólag a workflow által buildelt statikus oldalt kapja.
+
+## Helyi fejlesztés
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Helyi projektfájlok
+A fejlesztői belépőoldal az `app.html`.
 
-- Chrome/Edge alatt a File System Access API-val a megnyitott `.preon` projekt közvetlenül ugyanabba a helyi fájlba menthető vissza.
-- Más böngészőkben a mentés letöltésként működik.
-- A böngészőből importált képek, GIF-ek, videók, PDF-ek, SVG-k és GLB-k `data:` tartalomként kerülnek a projektbe, tehát nem kell őket szerverre feltölteni.
-- A webes projekt ezért hordozhatóbb, viszont sok nagy videó/3D fájl esetén maga a `.preon` fájl is nagy lehet.
+## Fontos
 
-## Megtartott fő funkciók
-
-- Single Slide / Continuous / One Slide
-- szöveg, rich text, shape-ek
-- képek, GIF, videó, SVG
-- PDF import és PDF-oldalak diákként
-- GLB/3D
-- slideshow
-- Layers / Assets / Master pages
-- grid, guides, snapping
-- animációk és transitionök
-- Visual/Text Notes
-- prezentációs/fullscreen mód
-- HTML export
-- közvetlen PDF export
-- dinamikus mezők
-- light/dark mód és HU/EN
-- workspace import/export
-- SVG maszk és kép/videó háttér
-
-## Szándékosan nincs a Lite-ban
-
-- LAN Live Preview / LAN megosztás
-- Tauri natív macOS/Windows menü és ablakkezelés
-- natív fájlrendszeres HTML-app-mappa import
-- desktop telepítő / automatikus frissítés
-
-Önálló, egyfájlos HTML beágyazása továbbra is lehetséges médiaimporttal; összetett, több fájlból álló HTML-app mappa a böngésző biztonsági korlátai miatt nincs benne az első Lite kiadásban.
-
-## Kompatibilitási megjegyzés
-
-A Lite által mentett projektek médiaadatai beágyazott `data:` URL-eket használnak, amit a desktop Pre'on is előnyben részesít. Egy régi desktop projekt viszont tartalmazhat csak helyi fájlútvonalra mutató asseteket; ezeket egy weboldal biztonsági okból nem olvashatja automatikusan.
+A webappnak nincs backendje, adatbázisa vagy saját alkalmazásszervere. A GitHub Pages csak a kész statikus HTML/CSS/JS fájlokat szolgálja ki; minden szerkesztés a böngészőben történik.

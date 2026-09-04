@@ -1,0 +1,17 @@
+PRE'ON LITE v0.1.1 - GITHUB PAGES
+
+1. Csomagold ki a ZIP-et.
+2. A Preon-Lite-v0.1.1 mappa TARTALMÁT töltsd fel a GitHub repository gyökerébe.
+   Fontos: az app.html, index.html, package.json, src, public és .github közvetlenül a repository gyökerében legyen.
+3. GitHub: Settings > Pages > Build and deployment > Source = GitHub Actions.
+   Ez az egyetlen kötelező GitHub-beállítás.
+4. Commit/push után nyisd meg az Actions fület.
+5. A "Deploy Preon Lite to GitHub Pages" workflow automatikusan buildeli és publikálja az appot.
+
+A korábbi v0.1 csomag fehér oldalt tudott adni, ha a Pages a main branch gyökerét szolgálta ki, mert a nyers index.html közvetlenül a src/main.tsx-et hivatkozta. A böngésző ezt nem tudja Vite build nélkül futtatni.
+
+A v0.1.1-ben:
+- a fejlesztői belépő külön app.html;
+- a gyökér index.html nem ad többé üres fehér oldalt hibás Pages-beállításnál;
+- a workflow kész statikus site/index.html-t generál;
+- a publikált fájlok relatív ./ asset útvonalakat használnak, ezért repository alútvonalon és saját domainen is működnek.

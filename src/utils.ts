@@ -1,7 +1,7 @@
 import type { AssetKind, AssetRecord, Rect, SlideElement } from "./types";
 
 export const APP_VERSION = "0.22.5";
-export const APP_EDITION = "Lite 0.1";
+export const APP_EDITION = "Lite 0.1.1";
 
 export function newId(prefix = "id"): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {

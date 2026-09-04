@@ -1,13 +1,13 @@
 {
   "name": "preon-lite",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 1420",
-    "build": "tsc && vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 4173",
-    "check": "tsc --noEmit"
+    "dev": "vite --host 0.0.0.0 --port 1420 --open /app.html",
+    "build": "vite build",
+    "check": "tsc --noEmit",
+    "preview": "vite preview --host 0.0.0.0 --port 4173"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
