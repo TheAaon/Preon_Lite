@@ -23,6 +23,7 @@ import {
   saveTextFallback,
   writeTextFile,
   writeBinaryFile,
+  activateLocalFontFamily,
 } from "./platform";
 import type { AssetRecord, ContextMenuProfile, PresentationProject, Slide, SlideElement, WorkspaceConfig } from "./types";
 import {
@@ -186,6 +187,17 @@ function StudioApp() {
     media.addEventListener?.("change", handleSystemTheme);
     return () => media.removeEventListener?.("change", handleSystemTheme);
   }, [state.workspace.language, state.workspace.theme, state.workspace.darkBrightness]);
+
+  useEffect(() => {
+    const families = new Set<string>();
+    const collect = (elements: SlideElement[]) => elements.forEach((element) => {
+      if (element.type === "text") families.add(primaryFontFamily(element.fontFamily));
+    });
+    state.project.slides.forEach((slide) => { collect(slide.elements); collect(slide.notesBoard?.elements ?? []); });
+    state.project.masters.forEach((master) => collect(master.elements));
+    state.project.textStyles.forEach((style) => families.add(primaryFontFamily(style.fontFamily)));
+    families.forEach((family) => { void activateLocalFontFamily(family, true); });
+  }, [state.project.id]);
 
   const notify = useCallback((message: string) => {
     setStatus(message);

@@ -1,3 +1,14 @@
+# Pre'on Lite v0.1.2
+
+## Webes munkamenet, 4 mp splash és helyi fontok
+
+- A splash minimum megjelenési ideje 4 másodpercre nőtt.
+- Az About / infóablakban megjelenik a `by Vásárhelyi Áron` kredit.
+- Új IndexedDB-alapú automatikus böngészős munkamenet-mentés: a projekt és a beágyazott média frissítés után is visszaáll, az aktív dia, dia-kijelölés, zoom és pan állapotával együtt.
+- Oldal elrejtése / bezárása előtt az app megpróbálja az aktuális munkamenetet azonnal kiírni.
+- Chrome/Edge Local Font Access támogatás: a font picker első megnyitásakor engedélykérés után a telepített helyi fontok listázhatók és használhatók.
+- A kiválasztott helyi fontok FontFace-ként aktiválódnak a webappban, a fontváltozatok metadata-listája is frissül.
+
 # Pre’on v0.22.5
 
 ## Presenter timer hotfix és Retina menüikonok

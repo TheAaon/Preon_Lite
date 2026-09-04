@@ -25,10 +25,25 @@ import { migrateProject } from "./projectMigration";
 import { resolvedMasterBackground, resolvedMasterElements, resolvedMasterGrid, resolvedMasterGuides } from "./masterResolver";
 import { applyWorkspaceAppearance } from "./theme";
 import { normalizeContextMenuItems } from "./contextMenuRegistry";
+import { consumePreloadedBrowserSession, requestPersistentBrowserStorage, saveBrowserSession, type BrowserSessionSnapshot } from "./browserPersistence";
 
 const AUTOSAVE_KEY = "presentation-studio.autosave.v1";
 const WORKSPACE_KEY = "presentation-studio.workspace.v1";
 const HISTORY_LIMIT = 80;
+
+function browserSessionFromState(state: EditorState): BrowserSessionSnapshot {
+  return {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    project: state.project,
+    activeSlideId: state.activeSlideId,
+    slideSelection: state.slideSelection,
+    editingMasterId: state.editingMasterId,
+    editingNotesBoard: state.editingNotesBoard,
+    zoom: state.zoom,
+    pan: state.pan,
+  };
+}
 
 function normalizeWorkspace(workspace: Partial<WorkspaceConfig>): WorkspaceConfig {
   const merged = { ...defaultWorkspace, ...workspace } as WorkspaceConfig;
@@ -197,26 +212,45 @@ interface EditorContextValue {
 const EditorContext = createContext<EditorContextValue | null>(null);
 
 export function EditorProvider({ children }: { children: ReactNode }) {
-  const initialProject = useMemo(loadProject, []);
-  const [state, setState] = useState<EditorState>(() => ({
-    project: initialProject,
-    projectPath: null,
-    activeSlideId: initialProject.slides[0]?.id ?? "",
-    slideSelection: initialProject.slides[0]?.id ? [initialProject.slides[0].id] : [],
-    editingMasterId: null,
-    editingNotesBoard: false,
-    selection: [],
-    tool: "select",
-    zoom: 0.5,
-    pan: { x: 80, y: 70 },
-    workspace: loadWorkspace(),
-    historyPast: [],
-    historyFuture: [],
-    dirty: false,
-    status: "Készen áll",
-    presentMode: false,
-    presentIndex: 0,
-  }));
+  const initialSession = useMemo(consumePreloadedBrowserSession, []);
+  const initialProject = useMemo(() => {
+    if (initialSession?.project) {
+      try { return migrateProject(deepClone(initialSession.project)); } catch { /* legacy fallback below */ }
+    }
+    return loadProject();
+  }, [initialSession]);
+  const [state, setState] = useState<EditorState>(() => {
+    const firstSlideId = initialProject.slides[0]?.id ?? "";
+    const restoredActiveSlideId = initialSession?.activeSlideId && initialProject.slides.some((slide) => slide.id === initialSession.activeSlideId)
+      ? initialSession.activeSlideId
+      : firstSlideId;
+    const restoredSlideSelection = (initialSession?.slideSelection ?? []).filter((id) => initialProject.slides.some((slide) => slide.id === id));
+    const restoredMasterId = initialSession?.editingMasterId && initialProject.masters.some((master) => master.id === initialSession.editingMasterId)
+      ? initialSession.editingMasterId
+      : null;
+    const restoredPan = initialSession?.pan && Number.isFinite(initialSession.pan.x) && Number.isFinite(initialSession.pan.y)
+      ? initialSession.pan
+      : { x: 80, y: 70 };
+    return {
+      project: initialProject,
+      projectPath: null,
+      activeSlideId: restoredActiveSlideId,
+      slideSelection: restoredSlideSelection.length ? restoredSlideSelection : (restoredActiveSlideId ? [restoredActiveSlideId] : []),
+      editingMasterId: restoredMasterId,
+      editingNotesBoard: Boolean(initialSession?.editingNotesBoard && !restoredMasterId),
+      selection: [],
+      tool: "select",
+      zoom: typeof initialSession?.zoom === "number" && Number.isFinite(initialSession.zoom) ? clamp(initialSession.zoom, 0.08, 3) : 0.5,
+      pan: restoredPan,
+      workspace: loadWorkspace(),
+      historyPast: [],
+      historyFuture: [],
+      dirty: false,
+      status: initialSession ? "Munkamenet visszaállítva" : "Készen áll",
+      presentMode: false,
+      presentIndex: 0,
+    };
+  });
   const stateRef = useRef(state);
   useEffect(() => {
     stateRef.current = state;
@@ -225,13 +259,15 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     let idleId: number | null = null;
+    const snapshot = browserSessionFromState(state);
     const save = () => {
       if (cancelled) return;
-      try {
-        localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(state.project));
-      } catch {
-        // A projekt ettől még kézzel menthető.
-      }
+      void saveBrowserSession(snapshot).then(() => {
+        // A böngésző nagyobb eséllyel megtartja a nagy médiafájlokat tartalmazó munkamenetet is.
+        void requestPersistentBrowserStorage();
+      }).catch(() => {
+        // IndexedDB nélkül a régi localStorage autosave még indulási tartalékként használható.
+      });
     };
     const timer = window.setTimeout(() => {
       const requestIdle = (window as Window & { requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number }).requestIdleCallback;
@@ -246,7 +282,20 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         cancelIdle?.(idleId);
       }
     };
-  }, [state.project]);
+  }, [state.project, state.activeSlideId, state.slideSelection, state.editingMasterId, state.editingNotesBoard, state.zoom, state.pan]);
+
+  useEffect(() => {
+    const flush = () => {
+      void saveBrowserSession(browserSessionFromState(stateRef.current)).catch(() => undefined);
+    };
+    const handleVisibility = () => { if (document.visibilityState === "hidden") flush(); };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, []);
 
   useEffect(() => {
     try {

@@ -2,6 +2,7 @@ import type { AppLanguage } from "./types";
 
 const EN: Record<string, string> = {
   "Készen áll": "Ready",
+  "Munkamenet visszaállítva": "Session restored",
   "Mentve": "Saved",
   "Fájl": "File",
   "Szerkesztés": "Edit",

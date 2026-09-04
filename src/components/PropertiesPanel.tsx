@@ -24,7 +24,7 @@ import type {
   ElementScrollBehavior,
   TextStyleRecord,
 } from "../types";
-import { listSystemFonts, listSystemFontFiles } from "../platform";
+import { activateLocalFontFamily, listSystemFonts, listSystemFontFiles, requestLocalFontsAccess, supportsLocalFontAccess } from "../platform";
 import { assetUrl, clamp, newId, round } from "../utils";
 import { Icon } from "./Icon";
 import { resolvedMasterGrid, resolvedSlideGrid, wouldCreateMasterCycle } from "../masterResolver";
@@ -82,6 +82,7 @@ const textStylePatch = (style: TextStyleRecord): Partial<TextElement> => ({
 
 let systemFontCache: string[] | null = null;
 let systemFontPromise: Promise<string[]> | null = null;
+let localFontAccessAttempted = false;
 let systemFontFileCache: FontFileRecord[] | null = null;
 let systemFontFilePromise: Promise<FontFileRecord[]> | null = null;
 const FONT_FAMILY_STORAGE_KEY = "preon.font-families.v1";
@@ -588,6 +589,11 @@ function FontPicker({
   const visibleFonts = filtered.slice(visibleStart, visibleEnd);
 
   useEffect(() => {
+    if (!open || !supportsLocalFontAccess()) return;
+    visibleFonts.forEach((font) => { void activateLocalFontFamily(font, false); });
+  }, [open, visibleFonts]);
+
+  useEffect(() => {
     if (!open) return;
     const index = Math.max(0, filtered.findIndex((font) => font === value));
     setActiveIndex(index >= 0 ? index : 0);
@@ -647,6 +653,7 @@ function FontPicker({
     hoverPreviewTimerRef.current = window.setTimeout(() => {
       hoverPreviewTimerRef.current = null;
       onPreview(font);
+      void activateLocalFontFamily(font, true);
     }, 90);
   };
 
@@ -666,6 +673,24 @@ function FontPicker({
     setFilter("all");
     setListScrollTop(0);
     setOpen(true);
+
+    // Chrome/Edge alatt az első kattintásból kérjük a Local Font Access engedélyt.
+    // Így a böngésző nem kér jogosultságot már az app indulásakor.
+    if (supportsLocalFontAccess() && !localFontAccessAttempted) {
+      localFontAccessAttempted = true;
+      void requestLocalFontsAccess().then(async (fontItems) => {
+        const normalized = setSystemFontFamilyCache(fontItems);
+        setFonts(normalized);
+        systemFontFilePromise = null;
+        const metadata = await listSystemFontFiles();
+        systemFontFileCache = metadata;
+        setRecords(metadata);
+        void activateLocalFontFamily(value.split(",")[0].trim().replace(/["']/g, ""), true);
+      }).catch(() => {
+        // Ha a felhasználó nem engedélyezi, a beépített böngészős fontlista marad.
+      });
+    }
+
     // A fontfájl/embedding metaadat jóval drágább, mint a családlista. A picker
     // ezért azonnal megnyílik, a részletes scan pedig csak egy rövid késleltetés
     // után indul. Így maga a kattintás/nyitás nem versenyez a font I/O-val.
@@ -681,6 +706,7 @@ function FontPicker({
     const safe = (index + filtered.length) % filtered.length;
     setActiveIndex(safe);
     onPreview(filtered[safe]);
+    void activateLocalFontFamily(filtered[safe], true);
   };
 
   const commitFont = (font: string) => {
@@ -688,6 +714,7 @@ function FontPicker({
     cancelMetadataTimer();
     committedRef.current = true;
     onCommit(font, originalRef.current);
+    void activateLocalFontFamily(font, true);
     setOpen(false);
     setQuery("");
     setFilter("all");

@@ -1,10 +1,19 @@
-# Pre'on Lite v0.1.1 — webes kiadás
+# Pre'on Lite v0.1.2 — webes kiadás
 
 Ez a Pre'on v0.22.5-ből készített, backend nélküli statikus webes változat. A prezentációs adatok a böngészőben maradnak; a projektek helyi `.preon` fájlként nyithatók és menthetők.
 
+
+## v0.1.2 újdonságok
+
+- A splash / töltőképernyő legalább **4 másodpercig** látható.
+- A Pre'on logóra kattintva megjelenő infóablakban szerepel: **by Vásárhelyi Áron**.
+- A webes munkamenet **IndexedDB-be automatikusan mentődik**, ezért frissítés vagy böngésző-újranyitás után a diák, képek, videók, PDF-ek, GLB-k és más betöltött projektadatok visszaállnak.
+- Chrome/Edge alatt a betűtípusválasztó az első megnyitáskor engedélyt kérhet a **helyileg telepített betűtípusokhoz**. Engedélyezés után a Pre'on Lite a gépen lévő fontcsaládokat is listázza és használja.
+- A helyi fontok csak az adott böngésző/gép számára érhetők el; más gépen a prezentáció megfelelő font nélkül fallback betűtípust használhat.
+
 ## GitHub Pages
 
-A repository gyökerébe a **Preon-Lite-v0.1.1 mappa tartalmát** töltsd fel.
+A repository gyökerébe a **Preon-Lite-v0.1.2 mappa tartalmát** töltsd fel.
 
 Ezután egyszer állítsd be:
 

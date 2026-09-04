@@ -6,10 +6,11 @@ import type { AppLanguage, AppTheme } from "./types";
 import { applyWorkspaceAppearance } from "./theme";
 import frogVideo from "./assets/beka.mp4";
 import preonLogo from "./assets/preon-logo.svg";
+import { loadBrowserSession, setPreloadedBrowserSession } from "./browserPersistence";
 import "./styles.css";
 
 const WORKSPACE_KEY = "presentation-studio.workspace.v1";
-const MINIMUM_SPLASH_MS = 900;
+const MINIMUM_SPLASH_MS = 4000;
 
 function storedWorkspacePrefs(): { language: AppLanguage; theme: AppTheme; darkBrightness: number; lightBrightness: number } {
   try {
@@ -91,8 +92,9 @@ function Boot() {
       if (cancelled) return;
 
       setStatus("Projekt visszaállítása…");
-      const appModule = await appPromise;
+      const [appModule, browserSession] = await Promise.all([appPromise, loadBrowserSession()]);
       if (cancelled) return;
+      setPreloadedBrowserSession(browserSession);
       await delay(160);
 
       const elapsed = performance.now() - started;

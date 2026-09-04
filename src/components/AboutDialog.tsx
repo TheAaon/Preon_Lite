@@ -15,6 +15,7 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
           <div>
             <strong>Pre'on</strong>
             <span>{t("Verzió")} {APP_VERSION} · {APP_EDITION}</span>
+            <span>by Vásárhelyi Áron</span>
           </div>
         </div>
         <p>{t("Precíz prezentációszerkesztő layoutokhoz, mozgáshoz, médiához, 3D-hez és hordozható webprezentációkhoz.")}</p>
